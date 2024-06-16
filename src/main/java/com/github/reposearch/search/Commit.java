@@ -10,6 +10,8 @@ public class Commit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String sha; // Git commit SHA ID
+
     private String author;
 
     @ElementCollection
@@ -22,7 +24,8 @@ public class Commit {
     public Commit() {
     }
 
-    public Commit(String author, List<String> paths, Project project) {
+    public Commit(String sha, String author, List<String> paths, Project project) {
+        this.sha = sha;
         this.author = author;
         this.paths = paths;
         this.project = project;
@@ -34,6 +37,14 @@ public class Commit {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getSha() {
+        return sha;
+    }
+
+    public void setSha(String sha) {
+        this.sha = sha;
     }
 
     public String getAuthor() {
@@ -66,6 +77,7 @@ public class Commit {
         if (obj == null || getClass() != obj.getClass()) return false;
         Commit commit = (Commit) obj;
         return Objects.equals(id, commit.id) &&
+                Objects.equals(sha, commit.sha) &&
                 Objects.equals(author, commit.author) &&
                 Objects.equals(paths, commit.paths) &&
                 Objects.equals(project, commit.project);
@@ -73,13 +85,14 @@ public class Commit {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, author, paths, project);
+        return Objects.hash(id, sha, author, paths, project);
     }
 
     @Override
     public String toString() {
         return "Commit{" +
                 "id=" + id +
+                ", sha='" + sha + '\'' +
                 ", author='" + author + '\'' +
                 ", paths=" + paths +
                 ", project=" + project +

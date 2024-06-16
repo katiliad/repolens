@@ -2,6 +2,7 @@ package com.github.reposearch.search;
 
 import jakarta.persistence.*;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Objects;
 
 @Entity
@@ -19,10 +20,10 @@ public class Project {
     public Project() {
     }
 
-    public Project(String url, String name, List<Commit> commits) {
+    public Project(String url, String name) {
         this.url = url;
         this.name = name;
-        this.commits = commits;
+        commits = new ArrayList<Commit>();
     }
 
     public Long getId() {

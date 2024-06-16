@@ -87,15 +87,19 @@ public class RepoSearchService {
         return projectRepository.findAll();
     }
 
-    public Project getProjectById(Long id) {
-        return projectRepository.findById(id).orElse(null);
-    }
-
     public Project saveProject(Project project) {
         return projectRepository.save(project);
     }
-
-    public void deleteProject(Long id) {
-        projectRepository.deleteById(id);
+    
+    public Project getProjectByName(String name) {
+        return projectRepository.findByName(name);
     }
+
+    public void deleteProjectByName(String name) {
+        Project project = projectRepository.findByName(name);
+        if (project != null) {
+            projectRepository.delete(project);
+        }
+    }
+
 }

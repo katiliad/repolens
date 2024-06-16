@@ -24,19 +24,20 @@ public class RepositorySearchController {
 //        return rs.getAllProjects();
 //    }
 
-    @GetMapping("/{id}")
-    public Project getProjectById(@PathVariable Long id) {
-        return rs.getProjectById(id);
+	@GetMapping("/{name}")
+	public Project getProjectByName(@PathVariable String name) {
+	    return rs.getProjectByName(name);
+	}
+
+    @PostMapping("/create")
+    public Project createProject(@RequestParam String url, @RequestParam String name) {
+    	Project project = new Project(url, name);
+    	return rs.saveProject(project);
     }
 
-    @PostMapping
-    public Project createProject(@RequestBody Project project) {
-        return rs.saveProject(project);
-    }
-
-    @DeleteMapping("/{id}")
-    public void deleteProject(@PathVariable Long id) {
-    	rs.deleteProject(id);
+    @DeleteMapping("/{name}")
+    public void deleteProjectByName(@PathVariable String name) {
+        rs.deleteProjectByName(name);
     }
 }
 
