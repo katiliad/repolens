@@ -1,16 +1,22 @@
 package com.github.reposearch.search;
 
 import jakarta.persistence.*;
+
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 @Entity
 public class Author {
-    @Id
+	 @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
     private boolean isPlatformEngineer;
+
+    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<Commit> commits = new HashSet<>();
 
     public Author() {
     }
@@ -19,7 +25,7 @@ public class Author {
         this.name = name;
         this.isPlatformEngineer = isPlatformEngineer;
     }
-
+    
     public Long getId() {
         return id;
     }
@@ -66,5 +72,10 @@ public class Author {
                 ", name='" + name + '\'' +
                 ", isPlatformEngineer=" + isPlatformEngineer +
                 '}';
+    }
+    
+    public void addCommit(Commit commit) {
+        commit.setAuthor(this);
+        this.commits.add(commit);
     }
 }

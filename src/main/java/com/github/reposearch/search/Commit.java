@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
 @Entity
 public class Commit {
@@ -14,7 +13,7 @@ public class Commit {
     private Long id;
 
     private String sha;
-    private String author;
+    private String authorName;
     private Date date;
     private String fullDate;
     private String slimDate;
@@ -28,16 +27,20 @@ public class Commit {
     @JoinColumn(name = "project_id")
     private Project project;
     
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id")
+    private Author author;
+    
     public Commit() {
     }
 
-    public Commit(String sha, String author, Date date, String fullDate, String slimDate, List<String> changedFilePaths) {
+    public Commit(String sha, String authorName, Date date, String fullDate, String slimDate, List<String> changedFiles) {
         this.sha = sha;
-        this.author = author;
+        this.authorName = authorName;
         this.date = date;
         this.fullDate = fullDate;
         this.slimDate = slimDate;
-        this.changedFiles = changedFilePaths;
+        this.changedFiles = changedFiles;
     }
 
 	public Long getId() {
@@ -56,14 +59,6 @@ public class Commit {
         this.sha = sha;
     }
 
-    public String getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(String author) {
-        this.author = author;
-    }
-
     public Date getDate() {
         return date;
     }
@@ -71,6 +66,23 @@ public class Commit {
     public void setDate(Date date) {
         this.date = date;
     }
+    
+	public List<String> getChangedFiles() {
+		return changedFiles;
+	}
+
+	public void setChangedFiles(List<String> changedFiles) {
+		this.changedFiles = changedFiles;
+	}
+
+	public String getAuthorName() {
+		return authorName;
+	}
+	
+	public void setAuthorName(String authorName) {
+		this.authorName = authorName;
+	}
+
 
     public String getFullDate() {
         return fullDate;
@@ -91,13 +103,17 @@ public class Commit {
     public void setProject(Project project) {
         this.project = project;
     }
+    
+    public void setAuthor(Author author) {
+        this.author = author;
+    }
 
     @Override
     public String toString() {
         return "Commit{" +
                 "id=" + id +
                 ", sha='" + sha + '\'' +
-                ", author='" + author + '\'' +
+                ", author='" + authorName + '\'' +
                 ", date=" + date +
                 ", fullDate='" + fullDate + '\'' +
                 ", slimDate='" + slimDate + '\'' +

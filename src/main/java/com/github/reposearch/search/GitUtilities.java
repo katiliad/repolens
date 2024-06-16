@@ -1,128 +1,75 @@
 package com.github.reposearch.search;
-import java.util.Objects;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import org.eclipse.jgit.*;
+import java.text.SimpleDateFormat;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
-import org.eclipse.jgit.treewalk.TreeWalk;
 
 public class GitUtilities {
 
-    public static Git cloneRepository(String name, String url, String accessToken) {
-        try {
-            deleteClonedFolder(name); // Delete folder if exists
-
-            if (accessToken == null) {
-                return Git.cloneRepository()
-                        .setURI(url)
-                        .setDirectory(new File(name))
-                        .call();
-            } else {
-                return Git.cloneRepository()
-                        .setURI(url)
-                        .setDirectory(new File(name))
-                        .setCredentialsProvider(new UsernamePasswordCredentialsProvider(accessToken, ""))
-                        .call();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+    public static Git cloneRepository(String name, String url, String accessToken) throws GitAPIException {
+    	File dir = new File(name);
+        if (dir.exists()) {
+            deleteDirectory(dir);
         }
-        return null;
+        return Git.cloneRepository()
+                .setURI(url)
+                .setDirectory(new File(name))
+                .setCredentialsProvider(new UsernamePasswordCredentialsProvider(accessToken, ""))
+                .call();
     }
 
-    public static List<Commit> fetchCommitsAndFiles(String repoPath) {
-        List<Commit> commitList = new ArrayList<>();
-        try (Repository repository = openRepository(repoPath)) {
-            Iterable<RevCommit> commits = new Git(repository).log().all().call();
-            for (RevCommit revCommit : commits) {
-                String sha = revCommit.getName();
-                String author = revCommit.getAuthorIdent().getName();
-                Date date = revCommit.getAuthorIdent().getWhen();
-                String fullDate = formatDate(date); // Format date as needed
-                String slimDate = formatSlimDate(date); // Format slim date as needed
-
-                // Checkout commit
-                checkoutCommit(repository, sha);
-
-                // Get changed files
-                List<String> changedFiles = getChangedFiles(repository, revCommit);
-
-                // Create Commit object
-                Commit commit = new Commit(sha, author, date, fullDate, slimDate, changedFiles);
-                commitList.add(commit);
-            }
-        } catch (IOException | GitAPIException e) {
-            e.printStackTrace();
+    public static List<Commit> getCommits(Git git) throws GitAPIException, IOException {
+        List<Commit> commits = new ArrayList<>();
+        Iterable<RevCommit> revCommits = git.log().call();
+        for (RevCommit revCommit : revCommits) {
+            String sha = revCommit.getName();
+            String authorName = revCommit.getAuthorIdent().getName();
+            Date date = revCommit.getAuthorIdent().getWhen();
+            String fullDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(date);
+            String slimDate = new SimpleDateFormat("yyyy-MM-dd").format(date);
+            List<String> changedFiles = getChangedFiles(git, sha);
+            commits.add(new Commit(sha, authorName, date, fullDate, slimDate, changedFiles));
         }
-        return commitList;
+        return commits;
     }
 
-    private static Repository openRepository(String repoPath) throws IOException {
-        return Git.open(new File(repoPath)).getRepository();
-    }
-
-    private static void checkoutCommit(Repository repository, String commitId) throws GitAPIException {
-        Git git = new Git(repository);
-        git.checkout().setName(commitId).call();
-    }
-
-    private static List<String> getChangedFiles(Repository repository, RevCommit commit) throws IOException {
+    private static List<String> getChangedFiles(Git git, String sha) throws IOException, GitAPIException {
         List<String> changedFiles = new ArrayList<>();
-        try (TreeWalk treeWalk = new TreeWalk(repository)) {
-            treeWalk.addTree(commit.getTree());
-            if (commit.getParentCount() > 0) {
-                treeWalk.addTree(commit.getParent(0).getTree());
-            }
-            treeWalk.setRecursive(true);
-            while (treeWalk.next()) {
-                changedFiles.add(treeWalk.getPathString());
+        RevCommit commit = git.getRepository().parseCommit(ObjectId.fromString(sha));
+        if (commit.getParentCount() > 0) {
+            RevCommit parent = commit.getParent(0);
+            DiffFormatter diffFormatter = new DiffFormatter(System.out);
+            diffFormatter.setRepository(git.getRepository());
+            List<DiffEntry> diffs = diffFormatter.scan(parent.getTree(), commit.getTree());
+            for (DiffEntry diff : diffs) {
+                changedFiles.add(diff.getNewPath());
             }
         }
         return changedFiles;
     }
 
-    private static String formatDate(Date date) {
-        // Implement date formatting logic if needed
-        return date.toString(); // Example: Convert Date to String
-    }
-
-    private static String formatSlimDate(Date date) {
-        // Implement slim date formatting logic if needed
-        return date.toString(); // Example: Convert Date to String
-    }
-
-    public static void deleteClonedFolder(String folder) {
-        Path folderPath = Path.of(folder);
-        try {
-            if (Files.exists(folderPath)) {
-                if (Files.isDirectory(folderPath)) {
-                    Files.walk(folderPath)
-                         .map(Path::toFile)
-                         .forEach(File::delete);
-                } else {
-                    Files.delete(folderPath);
+    public static void deleteDirectory(File directory) {
+        if (directory.exists()) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        deleteDirectory(file);
+                    } else {
+                        file.delete();
+                    }
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+            directory.delete();
         }
     }
 }
-	

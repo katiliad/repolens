@@ -7,7 +7,7 @@ import java.util.Objects;
 
 @Entity
 public class Project {
-    @Id
+	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -15,7 +15,7 @@ public class Project {
     private String name;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Commit> commits;
+    private List<Commit> commits = new ArrayList<>();
 
     public Project() {
     }
@@ -23,7 +23,6 @@ public class Project {
     public Project(String url, String name) {
         this.url = url;
         this.name = name;
-        commits = new ArrayList<Commit>();
     }
 
     public Long getId() {
