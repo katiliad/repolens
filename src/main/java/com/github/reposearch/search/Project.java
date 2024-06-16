@@ -82,4 +82,9 @@ public class Project {
                 ", commits=" + commits +
                 '}';
     }
+    
+    public void addCommit(Commit commit) {
+        commit.setProject(this);
+        this.commits.add(commit);
+    }
 }

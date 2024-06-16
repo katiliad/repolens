@@ -9,6 +9,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import org.eclipse.jgit.*;
@@ -19,179 +21,108 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.eclipse.jgit.treewalk.TreeWalk;
 
 public class GitUtilities {
-	
-	public static Git cloneRepository(String name, String url, String accessToken) {
-	    try {
-	        if (Objects.isNull(accessToken))
-	            return Git.cloneRepository()
-	                    .setURI(url)
-	                    .setDirectory(new File(name))
-	                    .call();
-	        else {
-	            return Git.cloneRepository()
-	                    .setURI(url)
-	                    .setDirectory(new File(name))
-	                    .setCredentialsProvider(new UsernamePasswordCredentialsProvider(accessToken, ""))
-	                    .call();
-	        }
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	    }
-	    return null;
-	}
-	
-	/**
-	 * Gets all commit ids for a specific git repo.
-	 *
-	 * @param git the git object
-	 */
-	
-	public static List<CommitObj> getCommitIds(Git git) {
-	    List<String> commitIds = new ArrayList<>();
-	    try {
-	        String treeName = getHeadName(git.getRepository());
-	        for (RevCommit commit : git.log().add(git.getRepository().resolve(treeName)).call())
-	            commitIds.add(commit.getName());
-	    } catch (Exception ignored) {
-	    }
-	    Collections.reverse(commitIds);
 
-	    List<CommitObj> commitObjList = new ArrayList<>();
-	    for (String s: commitIds){
-	        commitObjList.add(new CommitObj(s, getDateOfCommit(git,s)));
-	    }
+    public static Git cloneRepository(String name, String url, String accessToken) {
+        try {
+            deleteClonedFolder(name); // Delete folder if exists
 
-	    commitObjList.sort(Comparator.comparing(CommitObj::getDate));
+            if (accessToken == null) {
+                return Git.cloneRepository()
+                        .setURI(url)
+                        .setDirectory(new File(name))
+                        .call();
+            } else {
+                return Git.cloneRepository()
+                        .setURI(url)
+                        .setDirectory(new File(name))
+                        .setCredentialsProvider(new UsernamePasswordCredentialsProvider(accessToken, ""))
+                        .call();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
-	    return commitObjList;
-	}
+    public static List<Commit> fetchCommitsAndFiles(String repoPath) {
+        List<Commit> commitList = new ArrayList<>();
+        try (Repository repository = openRepository(repoPath)) {
+            Iterable<RevCommit> commits = new Git(repository).log().all().call();
+            for (RevCommit revCommit : commits) {
+                String sha = revCommit.getName();
+                String author = revCommit.getAuthorIdent().getName();
+                Date date = revCommit.getAuthorIdent().getWhen();
+                String fullDate = formatDate(date); // Format date as needed
+                String slimDate = formatSlimDate(date); // Format slim date as needed
 
+                // Checkout commit
+                checkoutCommit(repository, sha);
 
-	private static String getHeadName(Repository repo) {
-	    String result = null;
-	    try {
-	        ObjectId id = repo.resolve(Constants.HEAD);
-	        result = id.getName();
-	    } catch (IOException e) {
-	        e.printStackTrace();
-	    }
-	    return result;
-	}
-	
-	/**
-	 * Checkouts to specified commitId (SHA)
-	 *
-	 * @param sha             the revision we are checking out to
-	 * @param git             a git object
-	 */
-	public static void checkout(String name, String url, String accessToken, String sha, Git git) throws GitAPIException {
-	    try {
-	        git.checkout().setCreateBranch(true).setName("version" + sha).setStartPoint(sha).call();
-	    } catch (GitAPIException e) {
-	        deleteClonedFolder(name);
-	        cloneRepository(name, url, accessToken);
-	        git.checkout().setCreateBranch(true).setName("version" + sha).setStartPoint(sha).call();
-	    }
-	}
+                // Get changed files
+                List<String> changedFiles = getChangedFiles(repository, revCommit);
 
+                // Create Commit object
+                Commit commit = new Commit(sha, author, date, fullDate, slimDate, changedFiles);
+                commitList.add(commit);
+            }
+        } catch (IOException | GitAPIException e) {
+            e.printStackTrace();
+        }
+        return commitList;
+    }
 
-	private static void deleteClonedFolder(String folder){
-	    if (isWindows()) {
-	        try {
-	            Process proc = Runtime.getRuntime().exec("cmd /c cd " +System.getProperty("user.dir")+ "\\" + folder +
-	                    " && del .git\\index.lock " );
-	            System.out.println("start analysis");
-	            BufferedReader inputReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-	            String inputLine;
-	            while ((inputLine = inputReader.readLine()) != null) {
-	                System.out.println(" "+inputLine);
-	            }
-	            BufferedReader errorReader = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
-	            String errorLine;
-	            while ((errorLine = errorReader.readLine()) != null) {
-	                System.out.println(errorLine);
-	            }
-	            // TO FIX deleteSourceCode(new File(System.getProperty("user.dir")+ "\\" + folder));
-	        } catch (IOException e) {
-	            e.printStackTrace();
-	        }
-	    }
-	    else {
-	        try {
-	            ProcessBuilder pbuilder = new ProcessBuilder("bash", "-c",
-	                    "cd '" + System.getProperty("user.dir") +""+ "' ; rm -rf " + folder);
-	            File err = new File("err.txt");
-	            pbuilder.redirectError(err);
-	            Process p = pbuilder.start();
-	            BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-	            String line;
-	            while ((line = reader.readLine()) != null) {
-	                System.out.println(" "+line);
-	            }
-	            BufferedReader reader_2 = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-	            String line_2;
-	            while ((line_2 = reader_2.readLine()) != null) {
-	                System.out.println(line_2);
-	            }
-	        } catch (IOException e) {
-	            e.printStackTrace();
-	        }
-	    }
-	}
-	
-	public static boolean isWindows() {
-		return System.getProperty("os.name").toLowerCase().contains("win");
-	}
-	
-	private static String getDeveloperOfCommit(Git git, String sha){
-	    RevCommit headCommit;
-	    try {
-	        headCommit = git.getRepository().parseCommit(ObjectId.fromString(sha));
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	        return null;
-	    }
-	    return headCommit.getAuthorIdent().getName();
-	}
-	
-	private static Date getDateOfCommit(Git git, String sha){
-	    RevCommit headCommit;
-	    try {
-	        headCommit = git.getRepository().parseCommit(ObjectId.fromString(sha));
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	        return null;
-	    }
-	    return headCommit.getAuthorIdent().getWhen();
-	}
-	
+    private static Repository openRepository(String repoPath) throws IOException {
+        return Git.open(new File(repoPath)).getRepository();
+    }
 
-//RevCommit headCommit;
-//try {
-//    headCommit = git.getRepository().parseCommit(ObjectId.fromString(commitIds.get(i).getSha()));
-//} catch (Exception e) {
-//    e.printStackTrace();
-//    return null;
-//}
-//if(headCommit.getParentCount()!=0) {
-//
-// RevCommit diffWith = Objects.requireNonNull(headCommit).getParent(0);
-// FileOutputStream stdout = new FileOutputStream(FileDescriptor.out);
-//
-// try (DiffFormatter diffFormatter = new DiffFormatter(stdout)) {
-//
-//    diffFormatter.setRepository(git.getRepository());
-//    try {
-//        RenameDetector renameDetector = new RenameDetector(git.getRepository());
-//        renameDetector.addAll(diffFormatter.scan(diffWith, headCommit));
-//
-//
-//        ByteArrayOutputStream out = new ByteArrayOutputStream();
-//        DiffFormatter df = new DiffFormatter(out);
-//        df.setRepository(git.getRepository());
-//        for (org.eclipse.jgit.diff.DiffEntry entry : renameDetector.compute()) {
-//
-//          //path =  entry.getNewPath().toLowerCase();
+    private static void checkoutCommit(Repository repository, String commitId) throws GitAPIException {
+        Git git = new Git(repository);
+        git.checkout().setName(commitId).call();
+    }
+
+    private static List<String> getChangedFiles(Repository repository, RevCommit commit) throws IOException {
+        List<String> changedFiles = new ArrayList<>();
+        try (TreeWalk treeWalk = new TreeWalk(repository)) {
+            treeWalk.addTree(commit.getTree());
+            if (commit.getParentCount() > 0) {
+                treeWalk.addTree(commit.getParent(0).getTree());
+            }
+            treeWalk.setRecursive(true);
+            while (treeWalk.next()) {
+                changedFiles.add(treeWalk.getPathString());
+            }
+        }
+        return changedFiles;
+    }
+
+    private static String formatDate(Date date) {
+        // Implement date formatting logic if needed
+        return date.toString(); // Example: Convert Date to String
+    }
+
+    private static String formatSlimDate(Date date) {
+        // Implement slim date formatting logic if needed
+        return date.toString(); // Example: Convert Date to String
+    }
+
+    public static void deleteClonedFolder(String folder) {
+        Path folderPath = Path.of(folder);
+        try {
+            if (Files.exists(folderPath)) {
+                if (Files.isDirectory(folderPath)) {
+                    Files.walk(folderPath)
+                         .map(Path::toFile)
+                         .forEach(File::delete);
+                } else {
+                    Files.delete(folderPath);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
+	

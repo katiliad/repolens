@@ -4,6 +4,8 @@ import com.github.reposearch.search.Project;
 import com.github.reposearch.search.RepoSearchService;
 
 import java.util.*;
+
+import org.eclipse.jgit.api.Git;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,9 +32,18 @@ public class RepositorySearchController {
 	}
 
     @PostMapping("/create")
-    public Project createProject(@RequestParam String url, @RequestParam String name) {
-    	Project project = new Project(url, name);
-    	return rs.saveProject(project);
+    public Project createProject(@RequestParam String url, @RequestParam String name,  @RequestParam(required = false) String accessToken) {
+        String localPath = "../myRepo/" + name;
+        Git git = GitUtilities.cloneRepository(localPath, url, accessToken);
+
+        List<Commit> commitList = GitUtilities.fetchCommitsAndFiles(localPath);
+
+        Project project = new Project(url, name);
+        for (Commit commit : commitList) {
+            project.addCommit(commit); 
+        }
+
+        return rs.saveProject(project);
     }
 
     @DeleteMapping("/{name}")
