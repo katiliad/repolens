@@ -1,4 +1,6 @@
 package com.github.reposearch.search;
+import com.github.reposearch.search.Project;
+import com.github.reposearch.search.ProjectRepository;
 
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +22,7 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 public class RepoSearchService {
 	
 	public String getAllCommitsForMyRepo(){
-		Git repo = cloneRepository("myRepo", "https://github.com/katiliad/vaccineappointment", null);
+		Git repo = cloneRepository("../myRepo", "https://github.com/katiliad/vaccineappointment", null);
 		return getCommitIds(repo);
 	}
 	
@@ -77,4 +79,23 @@ public class RepoSearchService {
 	    }
 	    return result;
 	}
+	
+	@Autowired
+    private ProjectRepository projectRepository;
+
+    public List<Project> getAllProjects() {
+        return projectRepository.findAll();
+    }
+
+    public Project getProjectById(Long id) {
+        return projectRepository.findById(id).orElse(null);
+    }
+
+    public Project saveProject(Project project) {
+        return projectRepository.save(project);
+    }
+
+    public void deleteProject(Long id) {
+        projectRepository.deleteById(id);
+    }
 }
