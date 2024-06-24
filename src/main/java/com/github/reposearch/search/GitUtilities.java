@@ -11,7 +11,9 @@ import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.eclipse.jgit.util.io.DisabledOutputStream;
 
 public class GitUtilities {
 
@@ -44,14 +46,32 @@ public class GitUtilities {
 
     private static List<String> getChangedFiles(Git git, String sha) throws IOException, GitAPIException {
         List<String> changedFiles = new ArrayList<>();
-        RevCommit commit = git.getRepository().parseCommit(ObjectId.fromString(sha));
-        if (commit.getParentCount() > 0) {
-            RevCommit parent = commit.getParent(0);
-            DiffFormatter diffFormatter = new DiffFormatter(System.out);
-            diffFormatter.setRepository(git.getRepository());
-            List<DiffEntry> diffs = diffFormatter.scan(parent.getTree(), commit.getTree());
-            for (DiffEntry diff : diffs) {
-                changedFiles.add(diff.getNewPath());
+
+        try (RevWalk revWalk = new RevWalk(git.getRepository())) {
+            ObjectId commitId = ObjectId.fromString(sha);
+            RevCommit commit = revWalk.parseCommit(commitId);
+
+            if (commit.getParentCount() > 0) {
+                RevCommit parent = revWalk.parseCommit(commit.getParent(0).getId());
+
+                try (DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE)) {
+                    diffFormatter.setRepository(git.getRepository());
+                    List<DiffEntry> diffs = diffFormatter.scan(parent.getTree(), commit.getTree());
+
+                    for (DiffEntry diff : diffs) {
+                        changedFiles.add(diff.getNewPath());
+                    }
+                }
+            } else {
+                // Handle the case where the commit has no parent (initial commit)
+                try (DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE)) {
+                    diffFormatter.setRepository(git.getRepository());
+                    List<DiffEntry> diffs = diffFormatter.scan(null, commit.getTree());
+
+                    for (DiffEntry diff : diffs) {
+                        changedFiles.add(diff.getNewPath());
+                    }
+                }
             }
         }
         return changedFiles;
