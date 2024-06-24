@@ -132,4 +132,8 @@ public class Commit {
     public int hashCode() {
         return id.hashCode();
     }
+
+	public Author getAuthor() {
+		return this.author;
+	}
 }

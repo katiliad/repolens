@@ -74,5 +74,11 @@ public class RepositorySearchController {
     public void deleteProjectByName(@PathVariable String name) {
         rs.deleteProjectByName(name);
     }
+    
+    @GetMapping("/{name}/authors")
+    public List<AuthorInfo> getAuthorsByProjectName(@PathVariable String name,
+                                                    @RequestParam(required = false) Boolean platformEng) {
+        return rs.getAuthorsByProjectName(name, platformEng);
+    }
 }
 
