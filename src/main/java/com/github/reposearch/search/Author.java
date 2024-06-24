@@ -13,7 +13,7 @@ public class Author {
     private Long id;
 
     private String name;
-    private boolean isPlatformEngineer;
+    private boolean isPlatformEngineer = true;
 
     @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Commit> commits = new HashSet<>();
@@ -21,9 +21,8 @@ public class Author {
     public Author() {
     }
 
-    public Author(String name, boolean isPlatformEngineer) {
+    public Author(String name) {
         this.name = name;
-        this.isPlatformEngineer = isPlatformEngineer;
     }
     
     public Long getId() {

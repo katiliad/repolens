@@ -39,14 +39,16 @@ public class RepositorySearchController {
 
         Map<String, Author> authorsMap = new HashMap<>();
 
+        
         for (Commit commit : commits) {
             String authorName = commit.getAuthorName();
-            authorsMap.putIfAbsent(authorName, new Author(authorName, false));
+            authorsMap.putIfAbsent(authorName, new Author(authorName));
             Author author = authorsMap.get(authorName);
 
             for (String filePath : commit.getChangedFiles()) {
-                if (filePath.startsWith(".github/actions") || filePath.startsWith(".github/workflows")) {
-                    author.setPlatformEngineer(true);
+                if (!(filePath.startsWith(".github/actions") || filePath.startsWith(".github/workflows"))) {
+                    author.setPlatformEngineer(false);
+                    break;
                 }
             }
         }
