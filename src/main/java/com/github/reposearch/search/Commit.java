@@ -13,7 +13,6 @@ public class Commit {
     private Long id;
 
     private String sha;
-    private String authorName;
     private Date date;
     private String fullDate;
     private String slimDate;
@@ -34,9 +33,8 @@ public class Commit {
     public Commit() {
     }
 
-    public Commit(String sha, String authorName, Date date, String fullDate, String slimDate, List<String> changedFiles) {
+    public Commit(String sha, Date date, String fullDate, String slimDate, List<String> changedFiles) {
         this.sha = sha;
-        this.authorName = authorName;
         this.date = date;
         this.fullDate = fullDate;
         this.slimDate = slimDate;
@@ -75,15 +73,6 @@ public class Commit {
 		this.changedFiles = changedFiles;
 	}
 
-	public String getAuthorName() {
-		return authorName;
-	}
-	
-	public void setAuthorName(String authorName) {
-		this.authorName = authorName;
-	}
-
-
     public String getFullDate() {
         return fullDate;
     }
@@ -113,7 +102,6 @@ public class Commit {
         return "Commit{" +
                 "id=" + id +
                 ", sha='" + sha + '\'' +
-                ", author='" + authorName + '\'' +
                 ", date=" + date +
                 ", fullDate='" + fullDate + '\'' +
                 ", slimDate='" + slimDate + '\'' +

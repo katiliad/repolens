@@ -3,17 +3,22 @@ package com.github.reposearch.search;
 import com.github.reposearch.search.Project;
 import com.github.reposearch.search.RepoSearchService;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.beans.factory.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 public class RepositorySearchController {
+	
+	String repos_folder = "../repositories/";
 	
 	@Autowired
 	private RepoSearchService rs;
@@ -29,19 +34,32 @@ public class RepositorySearchController {
 	}
 
 	@PostMapping("/create")
-    public Project createProject(@RequestParam String url, @RequestParam String name) throws GitAPIException, IOException {
+    public ResponseEntity<String> createProject(@RequestParam String url, @RequestParam String name) throws GitAPIException, IOException {
 
-		String localPath = "../myRepo/" + name;
+		if (rs.getProjectByName(name) != null) {
+            return new ResponseEntity<>("Project with this name already exists in the database", HttpStatus.CONFLICT);
+        }
 		
+		String localPath = repos_folder + name;
+		File dir = new File(localPath);
+		if (dir.exists()) {
+			try {
+				GitUtilities.closeRepository(dir);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+			GitUtilities.deleteDirectory(dir);
+            if(dir.exists()) {
+            	return new ResponseEntity<>("Directory with this name already exists in the filesystem", HttpStatus.CONFLICT);
+            }
+        }
         Git git = GitUtilities.cloneRepository(localPath, url, null);
-
-        List<Commit> commits = GitUtilities.getCommits(git);
-
-        Map<String, Author> authorsMap = new HashMap<>();
-
         
+        List<Commit> commits = GitUtilities.getCommits(git);
+        Map<String, Author> authorsMap = new HashMap<>();
+       
         for (Commit commit : commits) {
-            String authorName = commit.getAuthorName();
+            String authorName = commit.getAuthor().getName();
             authorsMap.putIfAbsent(authorName, new Author(authorName));
             Author author = authorsMap.get(authorName);
 
@@ -58,7 +76,7 @@ public class RepositorySearchController {
         }
 
         for (Commit commit : commits) {
-            Author author = authorsMap.get(commit.getAuthorName());
+            Author author = authorsMap.get(commit.getAuthor().getName());
             commit.setAuthor(author);
             rs.saveCommit(commit);
         }
@@ -67,7 +85,8 @@ public class RepositorySearchController {
         for (Commit commit : commits) {
             project.addCommit(commit);
         }
-        return rs.saveProject(project);
+        rs.saveProject(project);
+        return new ResponseEntity<>("Project created successfully", HttpStatus.CREATED);
     }
 
     @DeleteMapping("/{name}")

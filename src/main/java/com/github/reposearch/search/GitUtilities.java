@@ -1,5 +1,6 @@
 package com.github.reposearch.search;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.io.File;
@@ -18,15 +19,26 @@ import org.eclipse.jgit.util.io.DisabledOutputStream;
 public class GitUtilities {
 
     public static Git cloneRepository(String name, String url, String accessToken) throws GitAPIException {
-    	File dir = new File(name);
-        if (dir.exists()) {
-            deleteDirectory(dir);
-        }
+
         return Git.cloneRepository()
                 .setURI(url)
                 .setDirectory(new File(name))
                 .setCredentialsProvider(new UsernamePasswordCredentialsProvider(accessToken, ""))
                 .call();
+    }
+    
+    public static void closeRepository(File localPath) throws IOException {
+        try (Git git = Git.open(localPath)) {
+            git.getRepository().close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     public static List<Commit> getCommits(Git git) throws GitAPIException, IOException {
@@ -39,7 +51,10 @@ public class GitUtilities {
             String fullDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(date);
             String slimDate = new SimpleDateFormat("yyyy-MM-dd").format(date);
             List<String> changedFiles = getChangedFiles(git, sha);
-            commits.add(new Commit(sha, authorName, date, fullDate, slimDate, changedFiles));
+            Author author = new Author(authorName);
+            Commit new_commit = new Commit(sha, date, fullDate, slimDate, changedFiles);
+            new_commit.setAuthor(author);
+            commits.add(new_commit);
         }
         return commits;
     }
