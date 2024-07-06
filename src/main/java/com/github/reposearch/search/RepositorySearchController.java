@@ -29,9 +29,14 @@ public class RepositorySearchController {
     }
 
 	@GetMapping("/{name}")
-	public Project getProjectByName(@PathVariable String name) {
-	    return rs.getProjectByName(name);
-	}
+	public ResponseEntity<Project> getProjectByName(@PathVariable String name) {
+        Project project = rs.getProjectByName(name);
+        if (project == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(project);
+    }
+
 
 	@PostMapping("/create")
     public ResponseEntity<String> createProject(@RequestParam String url, @RequestParam String name) throws GitAPIException, IOException {
@@ -95,9 +100,15 @@ public class RepositorySearchController {
     }
     
     @GetMapping("/{name}/authors")
-    public List<AuthorInfo> getAuthorsByProjectName(@PathVariable String name,
-                                                    @RequestParam(required = false) Boolean platformEng) {
-        return rs.getAuthorsByProjectName(name, platformEng);
-    }
+    public ResponseEntity<List<AuthorInfo>> getAuthorsByProjectName(@PathVariable String name,
+            @RequestParam(required = false) Boolean platformEng) {
+		List<AuthorInfo> authorInfos = rs.getAuthorsByProjectName(name, platformEng);
+		if (authorInfos == null) {
+		return ResponseEntity.badRequest().body(List.of(new AuthorInfo("Project does not exist", false, 0)));
+		} else if (authorInfos.isEmpty()) {
+		return ResponseEntity.ok(List.of(new AuthorInfo("No authors found", false, 0)));
+		}
+		return ResponseEntity.ok(authorInfos);
+	}
 }
 

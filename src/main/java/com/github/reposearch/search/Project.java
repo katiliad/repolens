@@ -5,7 +5,11 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Project {
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -15,6 +19,7 @@ public class Project {
     private String name;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
     private List<Commit> commits = new ArrayList<>();
 
     public Project() {

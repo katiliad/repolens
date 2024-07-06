@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.*;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class RepoSearchService {
@@ -34,8 +35,13 @@ public class RepoSearchService {
         return commitRepository.save(commit);
     }
     
+    @Transactional(readOnly = true)
     public Project getProjectByName(String name) {
-        return projectRepository.findByName(name);
+        Project project = projectRepository.findByName(name);
+        if (project != null) {
+            project.getCommits().size();
+        }
+        return project;
     }
 
     public void deleteProjectByName(String name) {
@@ -47,9 +53,15 @@ public class RepoSearchService {
     
     public List<AuthorInfo> getAuthorsByProjectName(String projectName, Boolean platformEng) {
         Project project = projectRepository.findByName(projectName);
+        if (project == null) {
+            return null;
+        }
         List<Commit> commits = commitRepository.findByProject(project);
 
-        List<Author> authors = authorRepository.findAll();
+        List<Author> authors = commits.stream()
+                .map(Commit::getAuthor)
+                .distinct()
+                .collect(Collectors.toList());
         
         Map<Long, Long> authorCommitCounts = commits.stream()
                 .collect(Collectors.groupingBy(commit -> commit.getAuthor().getId(), Collectors.counting()));
@@ -61,7 +73,7 @@ public class RepoSearchService {
                     return new AuthorInfo(author.getName(), author.isPlatformEngineer(), commitCount);
                 })
                 .collect(Collectors.toList());
-
+        
         if (authorInfos.isEmpty()) {
             return List.of(new AuthorInfo("No authors found", false, 0));
         }
