@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface CommitRepository extends JpaRepository<Commit, Long> {
     List<Commit> findByProject(Project project);
+    void deleteByProject(Project project);
 }

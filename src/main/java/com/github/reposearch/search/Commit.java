@@ -31,7 +31,7 @@ public class Commit {
     @JsonBackReference
     private Project project;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "author_id")
     @JsonBackReference
     private Author author;

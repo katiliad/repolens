@@ -19,7 +19,7 @@ public class Author {
     private String name;
     private boolean isPlatformEngineer = true;
 
-    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonBackReference
     private Set<Commit> commits = new HashSet<>();
 

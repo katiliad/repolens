@@ -94,10 +94,16 @@ public class RepositorySearchController {
         return new ResponseEntity<>("Project created successfully", HttpStatus.CREATED);
     }
 
-    @DeleteMapping("/{name}")
-    public void deleteProjectByName(@PathVariable String name) {
-        rs.deleteProjectByName(name);
-    }
+	 @DeleteMapping("/{name}")
+	    public ResponseEntity<String> deleteProjectByName(@PathVariable String name) {
+	        String resultMessage = rs.deleteProjectByName(name);
+
+	        if (resultMessage.startsWith("Error")) {
+	            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(resultMessage);
+	        } else {
+	            return ResponseEntity.ok(resultMessage);
+	        }
+	 }
     
     @GetMapping("/{name}/authors")
     public ResponseEntity<List<AuthorInfo>> getAuthorsByProjectName(@PathVariable String name,

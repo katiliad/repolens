@@ -44,10 +44,20 @@ public class RepoSearchService {
         return project;
     }
 
-    public void deleteProjectByName(String name) {
+    @Transactional
+    public String deleteProjectByName(String name) {
         Project project = projectRepository.findByName(name);
-        if (project != null) {
+        if (project == null) {
+            return "Error: Project with name '" + name + "' not found.";
+        }
+        try {
+            commitRepository.deleteByProject(project);
+            authorRepository.deleteByCommitsProject(project);
             projectRepository.delete(project);
+            return "Success: Project '" + name + "' deleted successfully.";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Error: Failed to delete project '" + name + "'. Please try again later.";
         }
     }
     
