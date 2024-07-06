@@ -56,17 +56,14 @@ public class RepoSearchService {
         if (project == null) {
             return null;
         }
-        List<Commit> commits = commitRepository.findByProject(project);
+        List<Commit> commits = project.getCommits();
 
-        List<Author> authors = commits.stream()
-                .map(Commit::getAuthor)
-                .distinct()
-                .collect(Collectors.toList());
-        
         Map<Long, Long> authorCommitCounts = commits.stream()
                 .collect(Collectors.groupingBy(commit -> commit.getAuthor().getId(), Collectors.counting()));
 
-        List<AuthorInfo> authorInfos = authors.stream()
+        List<AuthorInfo> authorInfos = commits.stream()
+                .map(Commit::getAuthor)
+                .distinct()
                 .filter(author -> platformEng == null || author.isPlatformEngineer() == platformEng)
                 .map(author -> {
                     long commitCount = authorCommitCounts.getOrDefault(author.getId(), 0L);
