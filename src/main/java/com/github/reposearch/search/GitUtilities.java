@@ -27,6 +27,15 @@ public class GitUtilities {
                 .call();
     }
     
+    public static void closeAndDeleteRepository(File dir) {
+        try {
+            closeRepository(dir);
+            deleteDirectory(dir);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
     public static void closeRepository(File localPath) throws IOException {
         try (Git git = Git.open(localPath)) {
             git.getRepository().close();
@@ -38,6 +47,22 @@ public class GitUtilities {
             TimeUnit.SECONDS.sleep(1);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+        }
+    }
+    
+    public static void deleteDirectory(File directory) {
+        if (directory.exists()) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        deleteDirectory(file);
+                    } else {
+                        file.delete();
+                    }
+                }
+            }
+            directory.delete();
         }
     }
 
@@ -92,19 +117,4 @@ public class GitUtilities {
         return changedFiles;
     }
 
-    public static void deleteDirectory(File directory) {
-        if (directory.exists()) {
-            File[] files = directory.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isDirectory()) {
-                        deleteDirectory(file);
-                    } else {
-                        file.delete();
-                    }
-                }
-            }
-            directory.delete();
-        }
-    }
 }

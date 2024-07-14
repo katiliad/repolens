@@ -41,7 +41,6 @@ public class RepositorySearchController {
         return ResponseEntity.ok(project);
     }
 
-
 	@PostMapping("/create")
     public ResponseEntity<String> createProject(@RequestParam String url, @RequestParam String name) throws GitAPIException, IOException {
 
@@ -51,17 +50,12 @@ public class RepositorySearchController {
 		
 		String localPath = repos_folder + name;
 		File dir = new File(localPath);
-		if (dir.exists()) {
-			try {
-				GitUtilities.closeRepository(dir);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-			GitUtilities.deleteDirectory(dir);
-            if(dir.exists()) {
-            	return new ResponseEntity<>("Directory with this name already exists in the filesystem", HttpStatus.CONFLICT);
-            }
-        }
+	    if (dir.exists()) {
+	        GitUtilities.closeAndDeleteRepository(dir);
+	        if (dir.exists()) {
+	            return new ResponseEntity<>("Directory with this name already exists in the filesystem", HttpStatus.CONFLICT);
+	        }
+	    }
         Git git = GitUtilities.cloneRepository(localPath, url, null);
         
         List<Commit> commits = GitUtilities.getCommits(git);
@@ -90,8 +84,6 @@ public class RepositorySearchController {
             author.setPlatformEngineer(isPlatformEngineer);
         }
         
-        
-
         for (Map.Entry<String, Author> entry : authorsMap.entrySet()) {
             rs.saveAuthor(entry.getValue());
         }
@@ -107,6 +99,7 @@ public class RepositorySearchController {
             project.addCommit(commit);
         }
         rs.saveProject(project);
+        GitUtilities.closeAndDeleteRepository(dir);
         return new ResponseEntity<>("Project created successfully", HttpStatus.CREATED);
     }
 
