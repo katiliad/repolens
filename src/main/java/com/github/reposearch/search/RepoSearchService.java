@@ -90,6 +90,22 @@ public class RepoSearchService {
         return (lastIndexOfDot == -1) ? "" : filePath.substring(lastIndexOfDot);
     }
     
+    public List<Commit> getCommitsByProjectName(String projectName) {
+        return commitRepository.findByProjectName(projectName);
+    }
+
+    public Map<Author, Long> getAuthorCommitCountsByProjectName(String projectName) {
+        List<Author> authors = authorRepository.findByCommitsProjectName(projectName);
+        Map<Author, Long> authorCommitCounts = authors.stream()
+                .collect(Collectors.toMap(
+                        author -> author,
+                        author -> author.getCommits().stream()
+                                .filter(commit -> commit.getProject().getName().equals(projectName))
+                                .count()
+                ));
+        return authorCommitCounts;
+    }
+    
     public List<AuthorInfo> getAuthorsByProjectName(String projectName, Boolean platformEng) {
         Project project = projectRepository.findByName(projectName);
         if (project == null) {
@@ -106,12 +122,12 @@ public class RepoSearchService {
                 .filter(author -> platformEng == null || author.isPlatformEngineer() == platformEng)
                 .map(author -> {
                     long commitCount = authorCommitCounts.getOrDefault(author.getId(), 0L);
-                    return new AuthorInfo(author.getName(), author.isPlatformEngineer(), commitCount);
+                    return new AuthorInfo(author.getName(), author.isPlatformEngineer(), author.isDevopsEngineer(), commitCount);
                 })
                 .collect(Collectors.toList());
         
         if (authorInfos.isEmpty()) {
-            return List.of(new AuthorInfo("No authors found", false, 0));
+            return List.of(new AuthorInfo("No authors found", false, false, 0));
         }
 
         return authorInfos;

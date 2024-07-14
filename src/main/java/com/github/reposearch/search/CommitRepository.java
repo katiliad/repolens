@@ -9,4 +9,5 @@ public interface CommitRepository extends JpaRepository<Commit, Long> {
     void deleteByProject(Project project);
     List<Commit> findByProjectAndAuthor(Project project, Author author);
     List<Commit> findByProjectAndAuthorName(Project project, String authorName);
+    List<Commit> findByProjectName(String projectName);
 }

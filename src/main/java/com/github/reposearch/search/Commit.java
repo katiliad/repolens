@@ -130,4 +130,8 @@ public class Commit {
 	public Author getAuthor() {
 		return this.author;
 	}
+
+	public Project getProject() {
+		return project;
+	}
 }

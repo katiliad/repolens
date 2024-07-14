@@ -9,6 +9,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -71,13 +72,25 @@ public class RepositorySearchController {
             authorsMap.putIfAbsent(authorName, new Author(authorName));
             Author author = authorsMap.get(authorName);
 
+            boolean isDevopsEngineer = false;
+            boolean isPlatformEngineer = true;
             for (String filePath : commit.getChangedFiles()) {
-                if (!(filePath.startsWith(".github/actions") || filePath.startsWith(".github/workflows"))) {
-                    author.setPlatformEngineer(false);
-                    break;
+                if (filePath.startsWith(".github/actions") || filePath.startsWith(".github/workflows")) {
+                    isDevopsEngineer = true;
+                } else {
+                    isPlatformEngineer = false;
                 }
             }
+            
+            if(isPlatformEngineer) {
+            	isDevopsEngineer = false;
+            }
+            
+            author.setDevopsEngineer(isDevopsEngineer);
+            author.setPlatformEngineer(isPlatformEngineer);
         }
+        
+        
 
         for (Map.Entry<String, Author> entry : authorsMap.entrySet()) {
             rs.saveAuthor(entry.getValue());
@@ -108,17 +121,38 @@ public class RepositorySearchController {
 	        }
 	 }
     
-    @GetMapping("/{name}/authors")
-    public ResponseEntity<List<AuthorInfo>> getAuthorsByProjectName(@PathVariable String name,
-            @RequestParam(required = false) Boolean platformEng) {
-		List<AuthorInfo> authorInfos = rs.getAuthorsByProjectName(name, platformEng);
-		if (authorInfos == null) {
-		return ResponseEntity.badRequest().body(List.of(new AuthorInfo("Project does not exist", false, 0)));
-		} else if (authorInfos.isEmpty()) {
-		return ResponseEntity.ok(List.of(new AuthorInfo("No authors found", false, 0)));
-		}
-		return ResponseEntity.ok(authorInfos);
-	}
+	 @GetMapping("/{name}/authors")
+	 public ResponseEntity<List<AuthorInfo>> getAuthorsByProjectName(
+	         @PathVariable String name,
+	         @RequestParam(required = false) Boolean platformEng,
+	         @RequestParam(required = false) Boolean devopsEng) {
+
+	     Project project = rs.getProjectByName(name);
+
+	     if (project == null) {
+	         return ResponseEntity.badRequest().body(List.of(new AuthorInfo("Project does not exist", false, false, 0)));
+	     }
+
+	     List<Commit> commits = rs.getCommitsByProjectName(name);
+	     Map<Author, Long> authorCommitCounts = rs.getAuthorCommitCountsByProjectName(name);
+
+	     List<AuthorInfo> authorInfos = commits.stream()
+	             .map(Commit::getAuthor)
+	             .distinct()
+	             .filter(author -> (platformEng == null || author.isPlatformEngineer() == platformEng)
+	                     && (devopsEng == null || author.isDevopsEngineer() == devopsEng))
+	             .map(author -> {
+	                 long commitCount = authorCommitCounts.getOrDefault(author, 0L);
+	                 return new AuthorInfo(author.getName(), author.isPlatformEngineer(), author.isDevopsEngineer(), commitCount);
+	             })
+	             .collect(Collectors.toList());
+
+	     if (authorInfos.isEmpty()) {
+	         return ResponseEntity.ok(List.of(new AuthorInfo("No authors found", false, false, 0)));
+	     } else {
+	         return ResponseEntity.ok(authorInfos);
+	     }
+	 }
     
     @GetMapping("/{project}/changedFiles/{author}")
     public ResponseEntity<?> getFileChangesByProjectAndAuthor(

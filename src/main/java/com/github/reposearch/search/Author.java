@@ -17,7 +17,8 @@ public class Author {
     private Long id;
 
     private String name;
-    private boolean isPlatformEngineer = true;
+    private boolean isPlatformEngineer = false;
+    private boolean isDevopsEngineer = false;
 
     @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonBackReference
@@ -53,6 +54,22 @@ public class Author {
     public void setPlatformEngineer(boolean platformEngineer) {
         isPlatformEngineer = platformEngineer;
     }
+    
+    public boolean isDevopsEngineer() {
+        return isDevopsEngineer;
+    }
+
+    public void setDevopsEngineer(boolean devopsEngineer) {
+        isDevopsEngineer = devopsEngineer;
+    }
+    
+    public Set<Commit> getCommits() {
+        return commits;
+    }
+
+    public void setCommits(Set<Commit> commits) {
+        this.commits = commits;
+    }
 
     @Override
     public boolean equals(Object obj) {
@@ -60,10 +77,11 @@ public class Author {
         if (obj == null || getClass() != obj.getClass()) return false;
         Author author = (Author) obj;
         return isPlatformEngineer == author.isPlatformEngineer &&
+                isDevopsEngineer == author.isDevopsEngineer &&
                 Objects.equals(id, author.id) &&
                 Objects.equals(name, author.name);
     }
-
+    
     @Override
     public int hashCode() {
         return Objects.hash(id, name, isPlatformEngineer);
@@ -75,6 +93,7 @@ public class Author {
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", isPlatformEngineer=" + isPlatformEngineer +
+                ", isDevopsEngineer=" + isDevopsEngineer +
                 '}';
     }
     

@@ -3,11 +3,13 @@ package com.github.reposearch.search;
 public class AuthorInfo {
     private String name;
     private boolean platformEngineer;
+    private boolean devopsEngineer;
     private long commitCount;
 
-    public AuthorInfo(String name, boolean platformEngineer, long commitCount) {
+    public AuthorInfo(String name, boolean platformEngineer, boolean devopsEngineer, long commitCount) {
         this.name = name;
         this.platformEngineer = platformEngineer;
+        this.devopsEngineer = devopsEngineer;
         this.commitCount = commitCount;
     }
 
@@ -25,6 +27,14 @@ public class AuthorInfo {
 
     public void setPlatformEngineer(boolean platformEngineer) {
         this.platformEngineer = platformEngineer;
+    }
+
+    public boolean isDevopsEngineer() {
+        return devopsEngineer;
+    }
+
+    public void setDevopsEngineer(boolean devopsEngineer) {
+        this.devopsEngineer = devopsEngineer;
     }
 
     public long getCommitCount() {
