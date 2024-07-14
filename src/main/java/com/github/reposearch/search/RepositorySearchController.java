@@ -138,6 +138,7 @@ public class RepositorySearchController {
 	                 long commitCount = authorCommitCounts.getOrDefault(author, 0L);
 	                 return new AuthorInfo(author.getName(), author.isPlatformEngineer(), author.isDevopsEngineer(), commitCount);
 	             })
+	             .sorted(Comparator.comparingLong(AuthorInfo::getCommitCount).reversed())
 	             .collect(Collectors.toList());
 
 	     if (authorInfos.isEmpty()) {
@@ -168,7 +169,7 @@ public class RepositorySearchController {
             if (fileChanges.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No file changes found for this author");
             }
-
+            fileChanges.sort(Comparator.comparingLong(FileChangeInfo::getCount).reversed());
             return ResponseEntity.ok(fileChanges);
         } catch (UnsupportedEncodingException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error decoding author name");
