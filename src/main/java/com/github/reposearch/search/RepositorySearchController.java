@@ -5,6 +5,9 @@ import com.github.reposearch.search.RepoSearchService;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import org.eclipse.jgit.api.Git;
@@ -116,5 +119,33 @@ public class RepositorySearchController {
 		}
 		return ResponseEntity.ok(authorInfos);
 	}
+    
+    @GetMapping("/{project}/changedFiles/{author}")
+    public ResponseEntity<?> getFileChangesByProjectAndAuthor(
+            @PathVariable String project,
+            @PathVariable String author) {
+        try {
+            String decodedAuthor = URLDecoder.decode(author, StandardCharsets.UTF_8.name());
+
+            Project proj = rs.getProjectByName(project);
+            if (proj == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Project not found");
+            }
+
+            Author auth = rs.getAuthorByNameAndProject(decodedAuthor, proj);
+            if (auth == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Author not found");
+            }
+
+            List<FileChangeInfo> fileChanges = rs.getFileChangesByProjectAndAuthor(project, decodedAuthor);
+            if (fileChanges.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No file changes found for this author");
+            }
+
+            return ResponseEntity.ok(fileChanges);
+        } catch (UnsupportedEncodingException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error decoding author name");
+        }
+    }
 }
 

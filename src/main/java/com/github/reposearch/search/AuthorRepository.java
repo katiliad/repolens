@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AuthorRepository extends JpaRepository<Author, Long> {
 	void deleteByCommitsProject(Project project);
+	Author findByName(String name);
+	Author findByNameAndCommitsProject(String name, Project project);
 }

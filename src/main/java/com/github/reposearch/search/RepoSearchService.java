@@ -61,6 +61,35 @@ public class RepoSearchService {
         }
     }
     
+    public Author getAuthorByNameAndProject(String authorName, Project project) {
+        return authorRepository.findByNameAndCommitsProject(authorName, project);
+    }
+
+    public List<FileChangeInfo> getFileChangesByProjectAndAuthor(String projectName, String authorName) {
+        Project project = projectRepository.findByName(projectName);
+        List<Commit> commits = commitRepository.findByProjectAndAuthorName(project, authorName);
+
+        Map<String, Long> fileChangeCounts = new HashMap<>();
+        for (Commit commit : commits) {
+            for (String filePath : commit.getChangedFiles()) {
+                String extension = getFileExtension(filePath);
+                fileChangeCounts.put(extension, fileChangeCounts.getOrDefault(extension, 0L) + 1);
+            }
+        }
+
+        List<FileChangeInfo> fileChanges = new ArrayList<>();
+        for (Map.Entry<String, Long> entry : fileChangeCounts.entrySet()) {
+            fileChanges.add(new FileChangeInfo(entry.getKey(), entry.getValue()));
+        }
+
+        return fileChanges;
+    }
+
+    private String getFileExtension(String filePath) {
+        int lastIndexOfDot = filePath.lastIndexOf('.');
+        return (lastIndexOfDot == -1) ? "" : filePath.substring(lastIndexOfDot);
+    }
+    
     public List<AuthorInfo> getAuthorsByProjectName(String projectName, Boolean platformEng) {
         Project project = projectRepository.findByName(projectName);
         if (project == null) {
