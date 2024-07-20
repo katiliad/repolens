@@ -66,8 +66,8 @@ public class RepositorySearchController {
             authorsMap.putIfAbsent(authorName, new Author(authorName));
             Author author = authorsMap.get(authorName);
 
-            boolean isDevopsEngineer = false;
-            boolean isPlatformEngineer = true;
+            boolean isDevopsEngineer = author.isDevopsEngineer();
+            boolean isPlatformEngineer = author.isPlatformEngineer();
             for (String filePath : commit.getChangedFiles()) {
                 if (filePath.startsWith(".github/actions") || filePath.startsWith(".github/workflows")) {
                     isDevopsEngineer = true;
