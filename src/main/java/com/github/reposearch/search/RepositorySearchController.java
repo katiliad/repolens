@@ -50,12 +50,12 @@ public class RepositorySearchController {
 		
 		String localPath = repos_folder + name;
 		File dir = new File(localPath);
-	    if (dir.exists()) {
-	        GitUtilities.closeAndDeleteRepository(dir);
-	        if (dir.exists()) {
-	            return new ResponseEntity<>("Directory with this name already exists in the filesystem", HttpStatus.CONFLICT);
-	        }
-	    }
+
+		GitUtilities.deleteDirectory(dir);
+        if (dir.exists()) {
+            return new ResponseEntity<>("Directory with this name already exists in the filesystem", HttpStatus.CONFLICT);
+        }
+
         Git git = GitUtilities.cloneRepository(localPath, url, null);
         
         List<Commit> commits = GitUtilities.getCommits(git);
@@ -99,7 +99,7 @@ public class RepositorySearchController {
             project.addCommit(commit);
         }
         rs.saveProject(project);
-        GitUtilities.closeAndDeleteRepository(dir);
+        GitUtilities.closeAndDeleteRepository(dir, git);
         return new ResponseEntity<>("Project created successfully", HttpStatus.CREATED);
     }
 

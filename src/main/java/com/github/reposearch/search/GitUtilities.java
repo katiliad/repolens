@@ -27,18 +27,18 @@ public class GitUtilities {
                 .call();
     }
     
-    public static void closeAndDeleteRepository(File dir) {
+    public static void closeAndDeleteRepository(File dir, Git git_repo) {
         try {
-            closeRepository(dir);
+            closeRepository(git_repo);
             deleteDirectory(dir);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
     
-    public static void closeRepository(File localPath) throws IOException {
-        try (Git git = Git.open(localPath)) {
-            git.getRepository().close();
+    public static void closeRepository(Git git_repo) throws IOException {
+        try {
+            git_repo.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
