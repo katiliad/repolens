@@ -5,6 +5,8 @@ const API_URL = 'http://localhost:8080';
 export interface Project {
   name: string;
   url: string;
+  isDevops : boolean;
+  isPlatformEngineer: boolean;
 }
 
 export interface AuthorInfo {

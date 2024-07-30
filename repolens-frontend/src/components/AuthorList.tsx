@@ -37,7 +37,15 @@ const AuthorList: React.FC<AuthorListProps> = ({ projectName }) => {
         <List>
           {authors.map((author) => (
             <ListItem key={author.name} button onClick={() => handleSelect(author)}>
-              <ListItemText primary={author.name} secondary={`Platform: ${author.platformEngineer}, DevOps: ${author.devopsEngineer}`} />
+              <ListItemText
+                primary={author.name}
+                secondary={
+                  <>
+                    <div>Platform Engineer: {author.platformEngineer ? '✅' : '❌'}</div>
+                    <div>DevOps Engineer: {author.devopsEngineer ? '✅' : '❌'}</div>
+                  </>
+                }
+              />
             </ListItem>
           ))}
         </List>

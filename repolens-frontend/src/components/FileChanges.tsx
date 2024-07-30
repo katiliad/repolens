@@ -17,11 +17,9 @@ const FileChanges: React.FC<FileChangesProps> = ({ projectName, authorName }) =>
 
   const fetchFileChanges = async () => {
     const response = await getFileChangesByProjectAndAuthor(projectName, authorName);
-    console.log(response);  // Log the entire response to verify structure
     if (response.error) {
       setMessage(response.error);
     } else {
-      console.log(response.data);  // Log the data to check contents
       setFileChanges(response.data);
     }
   };
