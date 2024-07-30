@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 public class RepositorySearchController {
 	
-	String repos_folder = "../repositories/";
+	String repos_folder = "../../repositories/";
 	
 	@Autowired
 	private RepoSearchService rs;

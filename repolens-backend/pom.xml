@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>repolens</artifactId>
+	<artifactId>repolens-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>repolens</name>
+	<name>repolens-backend</name>
 	<description>A Spring Boot application to search Github hosted repositories and determine their development style between Platform Engineering and DevOps</description>
 	<properties>
 		<java.version>17</java.version>
