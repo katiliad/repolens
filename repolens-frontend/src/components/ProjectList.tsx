@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { List, ListItem, ListItemText, Button, Box, Dialog, DialogActions, DialogContent, DialogTitle, Chip } from '@mui/material';
 import { getAllProjects, deleteProjectByName, getAuthorsByProjectName } from '../api';
 import AuthorList from './AuthorList';
-import { Project, AuthorInfo } from '../api';
+import ProjectForm from './ProjectForm';
+import { Project } from '../api';
 
 const ProjectList: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -13,6 +14,10 @@ const ProjectList: React.FC = () => {
 
   useEffect(() => {
     fetchProjects();
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
   }, []);
 
   const fetchProjects = async () => {
@@ -57,7 +62,7 @@ const ProjectList: React.FC = () => {
         setMessage(response.error);
       } else {
         setMessage('Project deleted successfully');
-        fetchProjects();
+        fetchProjects(); 
       }
     }
     setOpenDeleteDialog(false);
@@ -67,8 +72,20 @@ const ProjectList: React.FC = () => {
     setSelectedProject(project);
   };
 
+  const handleClickOutside = (event: MouseEvent) => {
+    if (!(event.target as HTMLElement).closest('.scroll-container')) {
+      resetState(); 
+    }
+  };
+
+  const resetState = () => {
+    setSelectedProject(null);
+    setMessage('');
+  };
+
   return (
     <Box>
+      <ProjectForm onProjectCreated={fetchProjects} /> { }
       {message && <p>{message}</p>}
       <div className="scroll-container">
         <List>
@@ -103,6 +120,7 @@ const ProjectList: React.FC = () => {
       </div>
       {selectedProject && <AuthorList projectName={selectedProject.name} />}
 
+      {}
       <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
@@ -115,6 +133,6 @@ const ProjectList: React.FC = () => {
       </Dialog>
     </Box>
   );
-}
+};
 
 export default ProjectList;

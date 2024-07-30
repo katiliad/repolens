@@ -9,7 +9,6 @@ const App: React.FC = () => {
       <Typography variant="h2" gutterBottom>
         RepoLens
       </Typography>
-      <ProjectForm />
       <ProjectList />
     </Container>
   );

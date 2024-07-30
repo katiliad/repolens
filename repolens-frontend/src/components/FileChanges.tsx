@@ -33,7 +33,7 @@ const FileChanges: React.FC<FileChangesProps> = ({ projectName, authorName }) =>
           {fileChanges.map((fileChange, index) => (
             <ListItem key={index}>
               <ListItemText
-                primary={fileChange.extension || "Unknown file type"}  // Display file extension or fallback text
+                primary={fileChange.extension || "Unknown file type"} 
                 secondary={`Changes: ${fileChange.count}`}
               />
             </ListItem>
