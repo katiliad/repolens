@@ -44,6 +44,10 @@ public class RepositorySearchController {
 	@PostMapping("/create")
     public ResponseEntity<String> createProject(@RequestParam String url, @RequestParam String name) throws GitAPIException, IOException {
 
+		if (!url.startsWith("https://github.com/")) {
+	        return new ResponseEntity<>("Repository URL must be from GitHub (e.g., https://github.com/username/repository)", HttpStatus.BAD_REQUEST);
+	    }
+		
 		if (rs.getProjectByName(name) != null) {
             return new ResponseEntity<>("Project with this name already exists in the database", HttpStatus.CONFLICT);
         }
