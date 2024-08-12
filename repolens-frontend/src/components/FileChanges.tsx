@@ -12,17 +12,17 @@ const FileChanges: React.FC<FileChangesProps> = ({ projectName, authorName }) =>
   const [message, setMessage] = useState<string>('');
 
   useEffect(() => {
+    const fetchFileChanges = async () => {
+      const response = await getFileChangesByProjectAndAuthor(projectName, authorName);
+      if (response.error) {
+        setMessage(response.error);
+      } else {
+        setFileChanges(response.data);
+      }
+    };
+
     fetchFileChanges();
   }, [projectName, authorName]);
-
-  const fetchFileChanges = async () => {
-    const response = await getFileChangesByProjectAndAuthor(projectName, authorName);
-    if (response.error) {
-      setMessage(response.error);
-    } else {
-      setFileChanges(response.data);
-    }
-  };
 
   return (
     <Box>

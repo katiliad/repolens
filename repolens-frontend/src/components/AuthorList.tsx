@@ -13,17 +13,17 @@ const AuthorList: React.FC<AuthorListProps> = ({ projectName }) => {
   const [message, setMessage] = useState<string>('');
 
   useEffect(() => {
+    const fetchAuthors = async () => {
+      const response = await getAuthorsByProjectName(projectName);
+      if (response.error) {
+        setMessage(response.error);
+      } else {
+        setAuthors(response.data);
+      }
+    };
+
     fetchAuthors();
   }, [projectName]);
-
-  const fetchAuthors = async () => {
-    const response = await getAuthorsByProjectName(projectName);
-    if (response.error) {
-      setMessage(response.error);
-    } else {
-      setAuthors(response.data);
-    }
-  };
 
   const handleSelect = (author: AuthorInfo) => {
     setSelectedAuthor(author);

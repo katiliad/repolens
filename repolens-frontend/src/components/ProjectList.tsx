@@ -4,6 +4,7 @@ import { getAllProjects, deleteProjectByName, getAuthorsByProjectName } from '..
 import AuthorList from './AuthorList';
 import ProjectForm from './ProjectForm';
 import { Project } from '../api';
+import axios from 'axios';
 
 const ProjectList: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -13,6 +14,12 @@ const ProjectList: React.FC = () => {
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
 
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!(event.target as HTMLElement).closest('.scroll-container')) {
+        resetState(); 
+      }
+    };
+
     fetchProjects();
     document.addEventListener('click', handleClickOutside);
     return () => {
@@ -23,32 +30,38 @@ const ProjectList: React.FC = () => {
   const fetchProjects = async () => {
     try {
       const response = await getAllProjects();
-      if (response.error) {
-        setMessage(response.error);
-      } else {
-        const projectsWithFlags = await Promise.all(
-          response.data.map(async (project) => {
-            const [platformResponse, devopsResponse] = await Promise.all([
-              getAuthorsByProjectName(project.name, true, false),
-              getAuthorsByProjectName(project.name, false, true),
-            ]);
-
-            const isPlatformEngineer = platformResponse.data.length > 0 && platformResponse.data[0].name !== "No authors found";
-            const isDevopsEngineer = devopsResponse.data.length > 0 && devopsResponse.data[0].name !== "No authors found";
-
-            return {
-              ...project,
-              isPlatformEngineer,
-              isDevopsEngineer,
-            };
-          })
-        );
-        setProjects(projectsWithFlags);
-      }
+      
+      const projects = response.data;
+  
+      const projectsWithFlags = await Promise.all(
+        projects.map(async (project : Project) => {
+          const [platformResponse, devopsResponse] = await Promise.all([
+            getAuthorsByProjectName(project.name, true, false),
+            getAuthorsByProjectName(project.name, false, true),
+          ]);
+  
+          const isPlatformEngineer = platformResponse.data.length > 0 && platformResponse.data[0].name !== "No authors found";
+          const isDevopsEngineer = devopsResponse.data.length > 0 && devopsResponse.data[0].name !== "No authors found";
+  
+          return {
+            ...project,
+            isPlatformEngineer,
+            isDevopsEngineer,
+          };
+        })
+      );
+  
+      setProjects(projectsWithFlags);
+  
     } catch (error) {
-      setMessage('An error occurred while fetching projects.');
+      if (axios.isAxiosError(error)) {
+        setMessage(error.response?.data.error || 'An error occurred while fetching projects.');
+      } else {
+        setMessage('An unexpected error occurred.');
+      }
     }
   };
+  
 
   const handleDelete = (name: string) => {
     setProjectToDelete(name);
@@ -72,12 +85,6 @@ const ProjectList: React.FC = () => {
     setSelectedProject(project);
   };
 
-  const handleClickOutside = (event: MouseEvent) => {
-    if (!(event.target as HTMLElement).closest('.scroll-container')) {
-      resetState(); 
-    }
-  };
-
   const resetState = () => {
     setSelectedProject(null);
     setMessage('');
@@ -89,7 +96,7 @@ const ProjectList: React.FC = () => {
       {message && <p>{message}</p>}
       <div className="scroll-container">
         <List>
-          {projects.map((project) => (
+          {projects.map((project : Project) => (
             <ListItem key={project.name} button onClick={() => handleSelect(project)}>
               <ListItemText
                 primary={project.name}
