@@ -17,7 +17,7 @@ public class Author {
     private Long id;
 
     private String name;
-    private boolean isPlatformEngineer = false;
+    private boolean isPlatformEngineer = true;
     private boolean isDevopsEngineer = false;
 
     @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)

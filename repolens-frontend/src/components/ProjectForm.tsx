@@ -3,7 +3,7 @@ import { TextField, Button, Box } from '@mui/material';
 import { createProject } from '../api';
 
 interface ProjectFormProps {
-  onProjectCreated: () => void; // Callback prop to trigger refetch
+  onProjectCreated: () => void;
 }
 
 const ProjectForm: React.FC<ProjectFormProps> = ({ onProjectCreated }) => {
@@ -25,7 +25,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ onProjectCreated }) => {
       setMessage(response.error);
     } else {
       setMessage('Project created successfully');
-      onProjectCreated(); // Refetch projects
+      onProjectCreated(); 
       setUrl('');
       setName('');
     }

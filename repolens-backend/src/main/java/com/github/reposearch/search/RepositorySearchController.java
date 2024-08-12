@@ -80,15 +80,14 @@ public class RepositorySearchController {
                 }
             }
             
-            if(isPlatformEngineer) {
-            	isDevopsEngineer = false;
-            }
-            
             author.setDevopsEngineer(isDevopsEngineer);
             author.setPlatformEngineer(isPlatformEngineer);
         }
         
         for (Map.Entry<String, Author> entry : authorsMap.entrySet()) {
+        	if(entry.getValue().isPlatformEngineer()){
+        		entry.getValue().setDevopsEngineer(false);
+        	}
             rs.saveAuthor(entry.getValue());
         }
 
