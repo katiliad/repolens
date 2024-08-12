@@ -4,9 +4,10 @@ import { createProject } from '../api';
 
 interface ProjectFormProps {
   onProjectCreated: () => void;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const ProjectForm: React.FC<ProjectFormProps> = ({ onProjectCreated }) => {
+const ProjectForm: React.FC<ProjectFormProps> = ({ onProjectCreated, setLoading }) => {
   const [url, setUrl] = useState<string>('');
   const [name, setName] = useState<string>('');
   const [message, setMessage] = useState<string>('');
@@ -19,15 +20,21 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ onProjectCreated }) => {
       return;
     }
     setNameError('');
-    
-    const response = await createProject(url, name);
-    if (response.error) {
-      setMessage(response.error);
-    } else {
-      setMessage('Project created successfully');
-      onProjectCreated(); 
-      setUrl('');
-      setName('');
+
+    setLoading(true);
+    try {
+      const response = await createProject(url, name);
+      if (response.error) {
+        setMessage(response.error);
+      } else {
+        setMessage('Project created successfully');
+        onProjectCreated(); 
+        setUrl('');
+        setName('');
+        setTimeout(() => setMessage(''), 3000);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
